@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Electrical Power System</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+        }
+        
+        .container {
+            min-width: 1200px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border: 2px solid #00ff00;
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .mission-phase {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .phase-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .phase-btn {
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+        
+        .phase-btn:hover, .phase-btn.active {
+            background: #00ff00;
+            color: #000;
+        }
+        
+        .phase-btn.test {
+            border-color: #ffff00;
+            color: #ffff00;
+        }
+        
+        .phase-btn.test:hover, .phase-btn.test.active {
+            background: #ffff00;
+            color: #000;
+        }
+        
+        .eps-diagram {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .power-sources, .buses, .controls {
+            border: 2px solid #00ff00;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #ffff00;
+            text-decoration: underline;
+        }
+        
+        .component {
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .component:hover {
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .component.active {
+            border-color: #ffff00;
+            background: rgba(255, 255, 0, 0.2);
+        }
+        
+        .component.on {
+            background: rgba(0, 255, 0, 0.3);
+            border-color: #00ff00;
+        }
+        
+        .component.off {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: #ff0000;
+            color: #ff6666;
+        }
+        
+        .component.testing {
+            background: rgba(255, 255, 0, 0.3);
+            border-color: #ffff00;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .fuel-cell {
+            margin-left: 20px;
+        }
+        
+        .stack {
+            margin-left: 40px;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 3px;
+            border: 1px solid #333;
+        }
+        
+        .stack:hover {
+            border-color: #00ff00;
+        }
+        
+        .bus {
+            text-align: center;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 15px;
+            border: 2px solid #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+        }
+        
+        .info-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #00ff00;
+            padding: 15px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .info-panel.show {
+            display: block;
+        }
+        
+        .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            color: #ff0000;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        .status-indicators {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .indicator {
+            border: 1px solid #666;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .indicator.active {
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.2);
+        }
+        
+        .indicator.warning {
+            border-color: #ff6600;
+            background: rgba(255, 102, 0, 0.2);
+            animation: blink 2s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        .voltage-display {
+            font-size: 14px;
+            color: #00ffff;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .control-switch {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            border: 1px solid #444;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .switch {
+            background: #333;
+            border: 1px solid #666;
+            color: #00ff00;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.2s;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .switch:hover {
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .switch.on {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .switch[data-switch*="squib"] {
+            min-width: 50px;
+        }
+
+        .monitoring-section {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #666;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .voltmeter-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .voltmeter-selector {
+            background: #333;
+            border: 1px solid #666;
+            color: #00ff00;
+            padding: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .voltmeter-display {
+            background: #000;
+            border: 2px solid #00ff00;
+            padding: 8px 12px;
+            font-size: 16px;
+            color: #00ffff;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .test-sequence {
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid #ffff00;
+            padding: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .test-sequence.active {
+            display: block;
+        }
+
+        .test-step {
+            margin: 5px 0;
+            padding: 5px;
+            cursor: pointer;
+            border: 1px solid #333;
+        }
+
+        .test-step:hover {
+            border-color: #ffff00;
+        }
+
+        .test-step.completed {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: #00ff00;
+        }
+
+        .test-step.current {
+            background: rgba(255, 255, 0, 0.2);
+            border-color: #ffff00;
+        }
+
+        .fuel-cell-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .stack-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px;
+            border: 1px solid #333;
+            font-size: 11px;
+        }
+
+        .stack-switch {
+            background: #333;
+            border: 1px solid #666;
+            color: #00ff00;
+            padding: 1px 6px;
+            cursor: pointer;
+            font-size: 9px;
+        }
+
+        .stack-switch.on {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #666;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 15px;
+            margin-right: 10px;
+            border: 1px solid #666;
+        }
+
+        .power-budget {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #666;
+            padding: 10px;
+            margin-top: 15px;
+        }
+
+        .budget-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+            font-size: 12px;
+        }
+
+        .emergency-controls {
+            margin-top: 15px;
+            padding: 10px;
+            border: 2px solid #ff6600;
+            background: rgba(255, 102, 0, 0.1);
+        }
+
+        .emergency-btn {
+            background: #ff6600;
+            border: none;
+            color: #000;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin: 2px;
+            font-family: inherit;
+            font-size: 11px;
+        }
+
+        .emergency-btn:hover {
+            background: #ff8833;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PROJECT GEMINI - ELECTRICAL POWER SYSTEM</h1>
+            <p>Interactive System Diagram - Click components for details</p>
+        </div>
+        
+        <div class="mission-phase">
+            <h3>Mission Phase:</h3>
+            <div class="phase-buttons">
+                <button class="phase-btn test" data-phase="test">Test</button>
+                <button class="phase-btn active" data-phase="prelaunch">Pre-Launch</button>
+                <button class="phase-btn" data-phase="launch">Launch</button>
+                <button class="phase-btn" data-phase="orbit">Orbit</button>
+                <button class="phase-btn" data-phase="reentry">Re-entry</button>
+                <button class="phase-btn" data-phase="landing">Landing</button>
+            </div>
+        </div>
+        
+        <div class="eps-diagram">
+            <div class="power-sources">
+                <div class="section-title">POWER SOURCES</div>
+                
+                <div class="component fuel-cell" data-component="fc1">
+                    <strong>FUEL CELL 1</strong>
+                    <div class="fuel-cell-controls">
+                        <div class="stack-control">
+                            <span>1A:</span>
+                            <div class="stack-switch" data-stack="fc1a">OFF</div>
+                        </div>
+                        <div class="stack-control">
+                            <span>1B:</span>
+                            <div class="stack-switch" data-stack="fc1b">OFF</div>
+                        </div>
+                        <div class="stack-control">
+                            <span>1C:</span>
+                            <div class="stack-switch" data-stack="fc1c">OFF</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component fuel-cell" data-component="fc2">
+                    <strong>FUEL CELL 2</strong>
+                    <div class="fuel-cell-controls">
+                        <div class="stack-control">
+                            <span>2A:</span>
+                            <div class="stack-switch" data-stack="fc2a">OFF</div>
+                        </div>
+                        <div class="stack-control">
+                            <span>2B:</span>
+                            <div class="stack-switch" data-stack="fc2b">OFF</div>
+                        </div>
+                        <div class="stack-control">
+                            <span>2C:</span>
+                            <div class="stack-switch" data-stack="fc2c">OFF</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="component" data-component="battery1">MAIN BATTERY 1</div>
+                <div class="component" data-component="battery2">MAIN BATTERY 2</div>
+                <div class="component" data-component="battery3">MAIN BATTERY 3</div>
+                <div class="component" data-component="battery4">MAIN BATTERY 4</div>
+                
+                <div class="component" data-component="squib1">SQUIB BATTERY 1</div>
+                <div class="component" data-component="squib2">SQUIB BATTERY 2</div>
+                <div class="component" data-component="squib3">SQUIB BATTERY 3</div>
+                
+                <div class="component" data-component="rss">
+                    <strong>REACTANT SUPPLY SYSTEM</strong>
+                    <div style="font-size: 12px; margin-top: 5px;">
+                        Cryogenic O₂ & H₂
+                    </div>
+                </div>
+            </div>
+            
+            <div class="buses">
+                <div class="section-title">ELECTRICAL BUSES</div>
+                
+                <div class="bus" data-component="main-bus">
+                    MAIN DC BUS
+                    <div style="font-size: 12px; margin-top: 5px;">
+                        Primary electrical distribution
+                    </div>
+                </div>
+                
+                <div class="bus" data-component="common-bus">
+                    COMMON CONTROL BUS
+                    <div style="font-size: 12px; margin-top: 5px;">
+                        Pyrotechnic systems
+                    </div>
+                </div>
+                
+                <div class="bus" data-component="oams-bus">
+                    OAMS SQUIB BUS
+                    <div style="font-size: 12px; margin-top: 5px;">
+                        Staging & separation
+                    </div>
+                </div>
+                
+                <div class="component" data-component="boost-bus">Boost-Insert-Abort Bus</div>
+                <div class="component" data-component="retro-bus">Retrograde Bus</div>
+                <div class="component" data-component="landing-bus">Landing Bus</div>
+                <div class="component" data-component="agena-bus">Agena Bus</div>
+
+                <div class="test-sequence" id="test-sequence">
+                    <div class="section-title" style="font-size: 14px;">TEST SEQUENCE (T-50 to T-15)</div>
+                    <div class="test-step" data-test="battery-check">1. Battery Check (T-50)</div>
+                    <div class="test-step" data-test="fuel-cell-check">2. Fuel Cell Check (T-45)</div>
+                    <div class="test-step" data-test="squib-check">3. Squib Battery Check (T-40)</div>
+                    <div class="test-step" data-test="full-power">4. Full Internal Power (T-15)</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="section-title">CONTROLS & MONITORING</div>
+                <div style="text-align: center; margin-bottom: 10px; font-size: 12px; color: #ffff00;">
+                    ⚡ Click switches to toggle • Click components for details ⚡
+                </div>
+
+                <div class="controls-grid">
+                    <div class="control-switch">
+                        <span>FC SECTION 1</span>
+                        <div class="switch" data-switch="fc1-power">OFF</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>FC SECTION 2</span>
+                        <div class="switch" data-switch="fc2-power">OFF</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>MAIN BAT 1</span>
+                        <div class="switch" data-switch="bat1">OFF</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>MAIN BAT 2</span>
+                        <div class="switch" data-switch="bat2">OFF</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>MAIN BAT 3</span>
+                        <div class="switch" data-switch="bat3">OFF</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>MAIN BAT 4</span>
+                        <div class="switch" data-switch="bat4">OFF</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>SQUIB BAT 1</span>
+                        <div class="switch" data-switch="squib1">UMB</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>SQUIB BAT 2</span>
+                        <div class="switch" data-switch="squib2">UMB</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>SQUIB BAT 3</span>
+                        <div class="switch" data-switch="squib3">UMB</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>BUS TIE</span>
+                        <div class="switch" data-switch="bus-tie">OFF</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>RETRO PWR</span>
+                        <div class="switch" data-switch="retro-pwr">SAFE</div>
+                    </div>
+                    <div class="control-switch">
+                        <span>LANDING</span>
+                        <div class="switch" data-switch="landing">SAFE</div>
+                    </div>
+                </div>
+                
+                <div class="monitoring-section">
+                    <h4 style="color: #ffff00; margin-bottom: 10px;">MONITORING</h4>
+                    
+                    <div class="voltmeter-section">
+                        <span>VOLTMETER:</span>
+                        <select class="voltmeter-selector" id="voltmeter-selector">
+                            <option value="C">C (Common)</option>
+                            <option value="M">M (Main Bus)</option>
+                            <option value="1A">1A (FC Stack)</option>
+                            <option value="1B">1B (FC Stack)</option>
+                            <option value="1C">1C (FC Stack)</option>
+                            <option value="2A">2A (FC Stack)</option>
+                            <option value="2B">2B (FC Stack)</option>
+                            <option value="2C">2C (FC Stack)</option>
+                            <option value="BT">BT (Battery Test)</option>
+                            <option value="S1">S1 (Squib Bus 1)</option>
+                            <option value="S2">S2 (Squib Bus 2)</option>
+                        </select>
+                        <div class="voltmeter-display" id="voltage-reading">24.5V</div>
+                    </div>
+                    
+                    <div class="component" data-component="ammeter">
+                        <strong>AMMETER</strong>
+                        <div style="font-size: 12px;">FC1A: <span id="fc1a-current">0.0A</span> | FC1B: <span id="fc1b-current">0.0A</span> | FC1C: <span id="fc1c-current">0.0A</span></div>
+                        <div style="font-size: 12px;">FC2A: <span id="fc2a-current">0.0A</span> | FC2B: <span id="fc2b-current">0.0A</span> | FC2C: <span id="fc2c-current">0.0A</span></div>
+                    </div>
+                    
+                    <div class="component" data-component="delta-pressure">
+                        <strong>ΔP INDICATOR</strong>
+                        <div style="font-size: 12px;">FC1: <span id="fc1-dp">0.2 psi</span> | FC2: <span id="fc2-dp">0.3 psi</span></div>
+                    </div>
+
+                    <div class="power-budget">
+                        <h4 style="color: #ffff00; margin-bottom: 8px;">POWER BUDGET</h4>
+                        <div class="budget-item">
+                            <span>Available Power:</span>
+                            <span id="available-power">0W</span>
+                        </div>
+                        <div class="budget-item">
+                            <span>System Load:</span>
+                            <span id="system-load">850W</span>
+                        </div>
+                        <div class="budget-item">
+                            <span>Battery Time:</span>
+                            <span id="battery-time">--:--</span>
+                        </div>
+                        <div class="budget-item">
+                            <span>Reactant Time:</span>
+                            <span id="reactant-time">--:--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="emergency-controls">
+                    <h4 style="color: #ff6600; margin-bottom: 8px;">EMERGENCY PROCEDURES</h4>
+                    <button class="emergency-btn" onclick="emergencyBusTie()">BUS TIE</button>
+                    <button class="emergency-btn" onclick="emergencyFCShutdown()">FC SHUTDOWN</button>
+                    <button class="emergency-btn" onclick="emergencyBatteryOnly()">BATTERY ONLY</button>
+                    <button class="emergency-btn" onclick="fuelCellPurge()">FC PURGE</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-indicators">
+            <div class="indicator" id="main-power">
+                <strong>MAIN POWER</strong><br>
+                <span id="main-status">BATTERIES</span>
+            </div>
+            <div class="indicator" id="fuel-cell-status">
+                <strong>FUEL CELLS</strong><br>
+                <span id="fc-status">OFFLINE</span>
+            </div>
+            <div class="indicator" id="squib-status">
+                <strong>SQUIB POWER</strong><br>
+                <span id="squib-power">UMBILICAL</span>
+            </div>
+            <div class="indicator" id="mission-status">
+                <strong>MISSION PHASE</strong><br>
+                <span id="phase-status">PRE-LAUNCH</span>
+            </div>
+            <div class="indicator" id="warning-status">
+                <strong>WARNINGS</strong><br>
+                <span id="warning-text">ALL NORMAL</span>
+            </div>
+            <div class="indicator" id="test-status">
+                <strong>TEST STATUS</strong><br>
+                <span id="test-text">READY</span>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <h4>LEGEND & IMPROVEMENTS:</h4>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgba(0, 255, 0, 0.3);"></div>
+                <span>Component ON/Active</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgba(255, 0, 0, 0.2);"></div>
+                <span>Component OFF/Inactive</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgba(255, 255, 0, 0.3);"></div>
+                <span>Testing/Selected</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgba(255, 165, 0, 0.3);"></div>
+                <span>Umbilical Power</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="info-panel" id="info-panel">
+        <button class="close-btn" onclick="closeInfo()">×</button>
+        <div id="info-content"></div>
+    </div>
+    
+    <script>
+        const componentInfo = {
+            'fc1': {
+                name: 'Fuel Cell 1',
+                description: 'Primary power source located in Equipment Section. Contains 3 stacks (1A, 1B, 1C) producing electrical energy from hydrogen and oxygen oxidation.',
+                specs: 'Each stack: 32 fuel cells\nNominal voltage: 27-31V\nLocation: Adapter (jettisoned at reentry)',
+                operation: 'Requires periodic purging to maintain performance. Automatically shut down when adapter separates.'
+            },
+            'fc2': {
+                name: 'Fuel Cell 2',
+                description: 'Secondary fuel cell system with identical configuration to FC1. Provides redundancy and additional power capacity.',
+                specs: 'Each stack: 32 fuel cells\nNominal voltage: 27-31V\nLocation: Adapter (jettisoned at reentry)',
+                operation: 'Works in parallel with FC1 during orbital operations.'
+            },
+            'battery1': 'Main Battery 1 - Silver-zinc battery in reentry module. 24V nominal, used during launch and after adapter separation.',
+            'battery2': 'Main Battery 2 - Silver-zinc battery in reentry module. 24V nominal, backup power source.',
+            'battery3': 'Main Battery 3 - Silver-zinc battery in reentry module. 24V nominal, backup power source.',
+            'battery4': 'Main Battery 4 - Silver-zinc battery in reentry module. 24V nominal, backup power source.',
+            'squib1': 'Squib Battery 1 - Powers Common Control Bus for pyrotechnic systems. Critical for staging operations.',
+            'squib2': 'Squib Battery 2 - Backup power for Common Control Bus. Provides redundancy for critical systems.',
+            'squib3': 'Squib Battery 3 - Third squib battery for maximum reliability of pyrotechnic operations.',
+            'main-bus': {
+                name: 'Main DC Bus',
+                description: 'Primary electrical distribution system powering all major spacecraft systems.',
+                specs: 'Voltage: 24-28V DC\nPowered by: Fuel Cells + Main Batteries',
+                loads: 'Guidance systems, life support, communications, computers, lighting'
+            },
+            'common-bus': {
+                name: 'Common Control Bus',
+                description: 'Isolated bus for pyrotechnic systems to prevent accidental firing.',
+                specs: 'Voltage: 24-28V DC\nPowered by: Squib Batteries only',
+                loads: 'Staging squibs, separation systems, parachute deployment'
+            },
+            'oams-bus': {
+                name: 'OAMS Squib Bus',
+                description: 'Distributes power to staging and separation squib buses.',
+                operation: 'Branches to Boost-Insert-Abort, Retrograde, Landing, and Agena buses'
+            },
+            'rss': {
+                name: 'Reactant Supply System',
+                description: 'Provides cryogenic hydrogen and oxygen to fuel cells.',
+                specs: 'Cryogenic storage tanks\nSupercritical fluid at 736 psia\nAlso supplies O₂ to life support',
+                operation: 'Requires periodic purging and heating cycles'
+            },
+            'voltmeter': 'AC/DC Voltmeter - Monitors voltage of selected power source. Selector allows checking fuel cell stacks, buses, and battery tests.',
+            'ammeter': 'Ammeter - Three dual-vertical-readout ammeters monitor individual fuel cell stack currents (1A through 2C).',
+            'delta-pressure': 'Delta Pressure Indicator - Shows O₂ vs H₂ and O₂ vs H₂O differential pressure in fuel cell sections.'
+        };
+        
+        // Switch states
+        const switchStates = {
+            'fc1-power': 'OFF',
+            'fc2-power': 'OFF',
+            'bat1': 'OFF',
+            'bat2': 'OFF',
+            'bat3': 'OFF',
+            'bat4': 'OFF',
+            'squib1': 'UMB',
+            'squib2': 'UMB',
+            'squib3': 'UMB',
+            'bus-tie': 'OFF',
+            'retro-pwr': 'SAFE',
+            'landing': 'SAFE'
+        };
+
+        // Fuel cell stack states
+        const stackStates = {
+            'fc1a': 'OFF',
+            'fc1b': 'OFF', 
+            'fc1c': 'OFF',
+            'fc2a': 'OFF',
+            'fc2b': 'OFF',
+            'fc2c': 'OFF'
+        };
+        
+        const missionPhases = {
+            'test': {
+                name: 'TEST',
+                batteries: [false, false, false, false],
+                squibs: ['UMB', 'UMB', 'UMB'],
+                fuelCells: [false, false, false, false, false, false],
+                fcSections: [false, false],
+                description: 'Systematic testing of all power systems per pre-flight checklist.'
+            },
+            'prelaunch': {
+                name: 'PRE-LAUNCH',
+                batteries: [true, true, true, true],
+                squibs: ['UMB', 'UMB', 'UMB'],
+                fuelCells: [true, true, true, true, true, true],
+                fcSections: [true, true],
+                description: 'All power sources active for redundancy during launch preparation.'
+            },
+            'launch': {
+                name: 'LAUNCH',
+                batteries: [true, true, true, true],
+                squibs: ['ON', 'ON', 'ON'],
+                fuelCells: [true, true, true, true, true, true],
+                fcSections: [true, true],
+                description: 'Maximum power available. Boost-Insert squibs armed for staging.'
+            },
+            'orbit': {
+                name: 'ORBIT',
+                batteries: [false, false, false, false],
+                squibs: ['ON', 'ON', 'ON'],
+                fuelCells: [true, true, true, true, true, true],
+                fcSections: [true, true],
+                description: 'Fuel cells primary power. Main batteries conserved for reentry.'
+            },
+            'reentry': {
+                name: 'RE-ENTRY',
+                batteries: [true, true, true, true],
+                squibs: ['ON', 'ON', 'ON'],
+                fuelCells: [false, false, false, false, false, false],
+                fcSections: [false, false],
+                description: 'Fuel cells jettisoned with adapter. Running on batteries only.'
+            },
+            'landing': {
+                name: 'LANDING',
+                batteries: [true, false, false, false],
+                squibs: ['ON', 'OFF', 'OFF'],
+                fuelCells: [false, false, false, false, false, false],
+                fcSections: [false, false],
+                description: 'Minimal power for recovery operations. Most systems shut down.'
+            }
+        };
+        
+        let currentPhase = 'prelaunch';
+        let testStep = 0;
+        let voltmeterSource = 'C';
+        
+        function showInfo(component) {
+            const panel = document.getElementById('info-panel');
+            const content = document.getElementById('info-content');
+            const info = componentInfo[component];
+            
+            if (typeof info === 'string') {
+                content.innerHTML = `<h3>${component.toUpperCase()}</h3><p>${info}</p>`;
+            } else if (info) {
+                content.innerHTML = `
+                    <h3>${info.name}</h3>
+                    <p>${info.description}</p>
+                    ${info.specs ? `<h4>Specifications:</h4><pre>${info.specs}</pre>` : ''}
+                    ${info.operation ? `<h4>Operation:</h4><p>${info.operation}</p>` : ''}
+                    ${info.loads ? `<h4>Loads:</h4><p>${info.loads}</p>` : ''}
+                `;
+            }
+            
+            panel.classList.add('show');
+        }
+        
+        function closeInfo() {
+            document.getElementById('info-panel').classList.remove('show');
+        }
+
+        function toggleSwitch(switchId) {
+            const switchElement = document.querySelector(`[data-switch="${switchId}"]`);
+            const currentState = switchStates[switchId];
+            
+            // Define toggle logic for different switch types
+            if (switchId.includes('bat') || switchId.includes('fc') && switchId.includes('power')) {
+                switchStates[switchId] = currentState === 'OFF' ? 'ON' : 'OFF';
+            } else if (switchId.includes('squib')) {
+                const states = ['UMB', 'ON', 'OFF'];
+                const currentIndex = states.indexOf(currentState);
+                switchStates[switchId] = states[(currentIndex + 1) % states.length];
+            } else if (switchId === 'bus-tie') {
+                switchStates[switchId] = currentState === 'OFF' ? 'ON' : 'OFF';
+            } else if (switchId === 'retro-pwr' || switchId === 'landing') {
+                switchStates[switchId] = currentState === 'SAFE' ? 'ARM' : 'SAFE';
+            }
+            
+            updateSwitchDisplay(switchId);
+            updateComponentStates();
+            updateStatusIndicators();
+            updatePowerBudget();
+        }
+
+        function toggleStack(stackId) {
+            stackStates[stackId] = stackStates[stackId] === 'OFF' ? 'ON' : 'OFF';
+            updateStackDisplay(stackId);
+            updatePowerBudget();
+        }
+
+        function updateSwitchDisplay(switchId) {
+            const switchElement = document.querySelector(`[data-switch="${switchId}"]`);
+            switchElement.textContent = switchStates[switchId];
+            switchElement.classList.remove('on');
+            switchElement.style.background = '';
+            switchElement.style.color = '';
+            
+            if (switchStates[switchId] === 'ON' || switchStates[switchId] === 'ARM') {
+                switchElement.classList.add('on');
+            } else if (switchStates[switchId] === 'UMB') {
+                switchElement.style.background = 'rgba(255, 165, 0, 0.8)';
+                switchElement.style.color = '#000';
+            }
+        }
+
+        function updateStackDisplay(stackId) {
+            const stackElement = document.querySelector(`[data-stack="${stackId}"]`);
+            stackElement.textContent = stackStates[stackId];
+            stackElement.classList.toggle('on', stackStates[stackId] === 'ON');
+        }
+        
+        function updateComponentStates() {
+            // Update component visual states based on switch positions
+            const componentMap = {
+                'bat1': 'battery1',
+                'bat2': 'battery2', 
+                'bat3': 'battery3',
+                'bat4': 'battery4',
+                'squib1': 'squib1',
+                'squib2': 'squib2',
+                'squib3': 'squib3',
+                'fc1-power': 'fc1',
+                'fc2-power': 'fc2'
+            };
+            
+            Object.entries(componentMap).forEach(([switchId, componentId]) => {
+                const element = document.querySelector(`[data-component="${componentId}"]`);
+                const state = switchStates[switchId];
+                
+                element.classList.remove('on', 'off', 'testing');
+                element.style.background = '';
+                
+                if (state === 'ON' || state === 'ARM') {
+                    element.classList.add('on');
+                } else if (state === 'OFF' || state === 'SAFE') {
+                    element.classList.add('off');
+                } else if (state === 'UMB') {
+                    element.style.background = 'rgba(255, 165, 0, 0.3)';
+                }
+            });
+        }
+        
+        function updateStatusIndicators() {
+            // Update status based on current switch states
+            const batteriesOn = ['bat1', 'bat2', 'bat3', 'bat4'].some(bat => switchStates[bat] === 'ON');
+            const fuelCellsOn = ['fc1-power', 'fc2-power'].some(fc => switchStates[fc] === 'ON');
+            const squibsOn = ['squib1', 'squib2', 'squib3'].some(squib => switchStates[squib] === 'ON');
+            
+            const mainPower = batteriesOn && fuelCellsOn ? 'FUEL CELLS + BATTERIES' :
+                             fuelCellsOn ? 'FUEL CELLS' :
+                             batteriesOn ? 'BATTERIES ONLY' : 'MINIMAL POWER';
+            document.getElementById('main-status').textContent = mainPower;
+            
+            const fcStatus = fuelCellsOn ? 'ONLINE' : 'OFFLINE';
+            document.getElementById('fc-status').textContent = fcStatus;
+            
+            const squibStatus = ['squib1', 'squib2', 'squib3'].some(s => switchStates[s] === 'UMB') ? 'UMBILICAL' : 'INTERNAL';
+            document.getElementById('squib-power').textContent = squibStatus;
+            
+            // Update indicator colors
+            document.getElementById('main-power').classList.toggle('active', batteriesOn || fuelCellsOn);
+            document.getElementById('fuel-cell-status').classList.toggle('active', fuelCellsOn);
+            document.getElementById('squib-status').classList.toggle('active', squibsOn);
+
+            // Check for warnings
+            let warnings = [];
+            if (!batteriesOn && !fuelCellsOn) warnings.push('NO POWER');
+            if (switchStates['bus-tie'] === 'ON') warnings.push('BUS TIE ACTIVE');
+            
+            const warningElement = document.getElementById('warning-status');
+            if (warnings.length > 0) {
+                warningElement.classList.add('warning');
+                document.getElementById('warning-text').textContent = warnings.join(', ');
+            } else {
+                warningElement.classList.remove('warning');
+                document.getElementById('warning-text').textContent = 'ALL NORMAL';
+            }
+        }
+
+        function updatePowerBudget() {
+            let availablePower = 0;
+            const systemLoad = 850; // watts
+            
+            // Calculate available power
+            if (switchStates['fc1-power'] === 'ON') {
+                Object.entries(stackStates).forEach(([stack, state]) => {
+                    if (stack.startsWith('fc1') && state === 'ON') {
+                        availablePower += 400; // watts per stack
+                    }
+                });
+            }
+            if (switchStates['fc2-power'] === 'ON') {
+                Object.entries(stackStates).forEach(([stack, state]) => {
+                    if (stack.startsWith('fc2') && state === 'ON') {
+                        availablePower += 400; // watts per stack
+                    }
+                });
+            }
+            
+            // Battery power
+            let activeBatteries = 0;
+            ['bat1', 'bat2', 'bat3', 'bat4'].forEach(bat => {
+                if (switchStates[bat] === 'ON') activeBatteries++;
+            });
+            availablePower += activeBatteries * 200; // watts per battery
+            
+            document.getElementById('available-power').textContent = availablePower + 'W';
+            document.getElementById('system-load').textContent = systemLoad + 'W';
+            
+            // Calculate time estimates
+            if (activeBatteries > 0 && availablePower >= systemLoad) {
+                const batteryHours = (activeBatteries * 24 * 0.7) / (systemLoad / 1000); // amp-hours / amps
+                const hours = Math.floor(batteryHours);
+                const minutes = Math.floor((batteryHours - hours) * 60);
+                document.getElementById('battery-time').textContent = `${hours}:${minutes.toString().padStart(2, '0')}`;
+            } else {
+                document.getElementById('battery-time').textContent = '--:--';
+            }
+        }
+        
+        function updatePhase(phase) {
+            currentPhase = phase;
+            
+            // Update phase buttons
+            document.querySelectorAll('.phase-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.phase === phase);
+            });
+
+            // Show/hide test sequence
+            document.getElementById('test-sequence').classList.toggle('active', phase === 'test');
+            
+            if (phase !== 'test') {
+                const config = missionPhases[phase];
+                
+                // Update switch states based on phase
+                switchStates['bat1'] = config.batteries[0] ? 'ON' : 'OFF';
+                switchStates['bat2'] = config.batteries[1] ? 'ON' : 'OFF';
+                switchStates['bat3'] = config.batteries[2] ? 'ON' : 'OFF';
+                switchStates['bat4'] = config.batteries[3] ? 'ON' : 'OFF';
+                
+                switchStates['squib1'] = config.squibs[0];
+                switchStates['squib2'] = config.squibs[1];
+                switchStates['squib3'] = config.squibs[2];
+                
+                switchStates['fc1-power'] = config.fcSections[0] ? 'ON' : 'OFF';
+                switchStates['fc2-power'] = config.fcSections[1] ? 'ON' : 'OFF';
+                
+                // Update fuel cell stacks
+                const stackIds = ['fc1a', 'fc1b', 'fc1c', 'fc2a', 'fc2b', 'fc2c'];
+                stackIds.forEach((stackId, idx) => {
+                    stackStates[stackId] = config.fuelCells[idx] ? 'ON' : 'OFF';
+                });
+            }
+            
+            // Update all displays
+            Object.keys(switchStates).forEach(switchId => updateSwitchDisplay(switchId));
+            Object.keys(stackStates).forEach(stackId => updateStackDisplay(stackId));
+            updateComponentStates();
+            
+            // Update status indicators
+            document.getElementById('phase-status').textContent = currentPhase.toUpperCase();
+            updateStatusIndicators();
+            updatePowerBudget();
+        }
+
+        function runTestSequence(testType) {
+            const testElement = document.querySelector(`[data-test="${testType}"]`);
+            testElement.classList.add('current');
+            document.getElementById('test-text').textContent = `RUNNING: ${testType.toUpperCase()}`;
+            
+            setTimeout(() => {
+                testElement.classList.remove('current');
+                testElement.classList.add('completed');
+                document.getElementById('test-text').textContent = `${testType.toUpperCase()} COMPLETE`;
+            }, 2000);
+        }
+
+        // Emergency procedures
+        function emergencyBusTie() {
+            switchStates['bus-tie'] = 'ON';
+            updateSwitchDisplay('bus-tie');
+            updateStatusIndicators();
+        }
+
+        function emergencyFCShutdown() {
+            switchStates['fc1-power'] = 'OFF';
+            switchStates['fc2-power'] = 'OFF';
+            Object.keys(stackStates).forEach(stack => {
+                stackStates[stack] = 'OFF';
+            });
+            updatePhase(currentPhase);
+        }
+
+        function emergencyBatteryOnly() {
+            emergencyFCShutdown();
+            ['bat1', 'bat2', 'bat3', 'bat4'].forEach(bat => {
+                switchStates[bat] = 'ON';
+            });
+            updatePhase(currentPhase);
+        }
+
+        function fuelCellPurge() {
+            document.getElementById('test-text').textContent = 'FC PURGE CYCLE';
+            setTimeout(() => {
+                document.getElementById('test-text').textContent = 'PURGE COMPLETE';
+            }, 3000);
+        }
+
+        // Event listeners
+        document.querySelectorAll('[data-component]').forEach(element => {
+            element.addEventListener('click', () => {
+                showInfo(element.dataset.component);
+            });
+        });
+        
+        document.querySelectorAll('.phase-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                updatePhase(btn.dataset.phase);
+            });
+        });
+        
+        // Add switch click handlers
+        document.querySelectorAll('[data-switch]').forEach(switchElement => {
+            switchElement.addEventListener('click', () => {
+                toggleSwitch(switchElement.dataset.switch);
+            });
+        });
+
+        // Add stack click handlers
+        document.querySelectorAll('[data-stack]').forEach(stackElement => {
+            stackElement.addEventListener('click', () => {
+                toggleStack(stackElement.dataset.stack);
+            });
+        });
+
+        // Test sequence handlers
+        document.querySelectorAll('[data-test]').forEach(testElement => {
+            testElement.addEventListener('click', () => {
+                runTestSequence(testElement.dataset.test);
+            });
+        });
+
+        // Voltmeter selector
+        document.getElementById('voltmeter-selector').addEventListener('change', (e) => {
+            voltmeterSource = e.target.value;
+        });
+        
+        // Initialize
+        updatePhase('prelaunch');
+        
+        // Simulate real-time data
+        setInterval(() => {
+            // Voltage simulation based on source
+            let voltage = 0;
+            if (voltmeterSource === 'C' || voltmeterSource === 'M') {
+                if (switchStates['fc1-power'] === 'ON' || switchStates['fc2-power'] === 'ON') {
+                    voltage = 27.5 + Math.random() * 2;
+                } else if (['bat1', 'bat2', 'bat3', 'bat4'].some(bat => switchStates[bat] === 'ON')) {
+                    voltage = 24.0 + Math.random() * 1.5;
+                } else {
+                    voltage = 0;
+                }
+            } else if (voltmeterSource.includes('A') || voltmeterSource.includes('B') || voltmeterSource.includes('C')) {
+                const stackId = 'fc' + voltmeterSource.toLowerCase();
+                voltage = stackStates[stackId] === 'ON' ? 27.5 + Math.random() * 2 : 0;
+            } else if (voltmeterSource === 'BT') {
+                // Battery test mode
+                const activeBat = ['bat1', 'bat2', 'bat3', 'bat4'].find(bat => switchStates[bat] === 'ON');
+                voltage = activeBat ? 24.0 + Math.random() * 1.5 : 0;
+            } else if (voltmeterSource.includes('S')) {
+                // Squib bus
+                voltage = 24.5 + Math.random() * 1;
+            }
+            
+            document.getElementById('voltage-reading').textContent = voltage.toFixed(1) + 'V';
+            
+            // Current simulation
+            ['fc1a', 'fc1b', 'fc1c', 'fc2a', 'fc2b', 'fc2c'].forEach(stack => {
+                const current = stackStates[stack] === 'ON' ? (12 + Math.random() * 3).toFixed(1) : '0.0';
+                document.getElementById(stack + '-current').textContent = current + 'A';
+            });
+            
+            // Delta pressure simulation
+            document.getElementById('fc1-dp').textContent = (0.2 + Math.random() * 0.3).toFixed(1) + ' psi';
+            document.getElementById('fc2-dp').textContent = (0.3 + Math.random() * 0.2).toFixed(1) + ' psi';
+            
+            // Update reactant time
+            const activeStacks = Object.values(stackStates).filter(state => state === 'ON').length;
+            if (activeStacks > 0) {
+                const hours = Math.floor(48 / activeStacks); // Approximate reactant life
+                const minutes = Math.floor((48 / activeStacks - hours) * 60);
+                document.getElementById('reactant-time').textContent = `${hours}:${minutes.toString().padStart(2, '0')}`;
+            } else {
+                document.getElementById('reactant-time').textContent = '--:--';
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
